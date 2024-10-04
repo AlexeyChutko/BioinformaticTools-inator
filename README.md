@@ -44,6 +44,3 @@ length_bounds = (30, 70)
 quality_threshold = 90
 print(filter_fastq(seqs, gc_bounds, length_bounds, quality_threshold))
 ```
-
-### Test screenshots
-![hw4_tests](hw4_tests.PNG)
