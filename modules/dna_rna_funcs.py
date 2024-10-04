@@ -1,59 +1,63 @@
 from typing import Dict, List, Union
 
+dna_dict = {'A': 'T', 'G': 'C', 'T': 'A', 'C': 'G', 'a': 't', 'g': 'c', 't': 'a', 'c': 'g'}
+rna_dict = {'A': 'U', 'G': 'C', 'U': 'A', 'C': 'G', 'a': 'u', 'g': 'c', 'u': 'a', 'c': 'g'}
+
+
+def is_valid_na(seq: str) -> None:
+    if ('u' in seq or 'U' in seq) and ('t' in seq or 'T' in seq):
+        raise ValueError("Error: simultaneous presence of 'u' and 't' "
+                         " in any register is unacceptable.")
+    if not set([symb.upper() for symb in seq]).issubset({'A', 'T', 'G', 'C', 'U'}):
+        raise ValueError(f"Error: the sequence contains "
+                         f"invalid characters: {seq}")
+
 
 def transcribe(*args: str) -> Union[List[str], str]:
     results = []
-    for i in args:
-        transcribed_seq = i.replace('T', 'U').replace('t', 'u')
+    for seq in args:
+        transcribed_seq = seq.replace('T', 'U').replace('t', 'u')
         results.append(transcribed_seq)
     if len(args) == 1:
-        return "".join(results)
+        return results[0]
     return results
 
 
 def reverse(*args: str) -> Union[List[str], str]:
-    results = [i[::-1] for i in args]
+    results = [seq[::-1] for seq in args]
     if len(args) == 1:
-        return "".join(results)
+        return results[0]
     return results
 
 
 def complement(*args: str) -> Union[List[str], str]:
-    dna_dict_up = {'A': 'T', 'G': 'C', 'T': 'A', 'C': 'G'}
-    dna_dict_low = {'a': 't', 'g': 'c', 't': 'a', 'c': 'g'}
-    rna_dict_up = {'A': 'U', 'G': 'C', 'U': 'A', 'C': 'G'}
-    rna_dict_low = {'a': 'u', 'g': 'c', 'u': 'a', 'c': 'g'}
     results = []
-    for j in args:
+    for seq in args:
         complement_seq = []
-        if 'u' in j or 'U' in j:
-            for m in j:
-                if m in rna_dict_up:
-                    complement_seq.append(rna_dict_up[m])
-                elif m in rna_dict_low:
-                    complement_seq.append(rna_dict_low[m])
+        if 'u' in seq or 'U' in seq:
+            for symb in seq:
+                if symb in rna_dict:
+                    complement_seq.append(rna_dict[symb])
+                elif symb in rna_dict:
+                    complement_seq.append(rna_dict[symb])
                 else:
-                    complement_seq.append(m)
+                    complement_seq.append(symb)
         else:
-            for m in j:
-                if m in dna_dict_up:
-                    complement_seq.append(dna_dict_up[m])
-                elif m in dna_dict_low:
-                    complement_seq.append(dna_dict_low[m])
+            for symb in seq:
+                if symb in dna_dict:
+                    complement_seq.append(dna_dict[symb])
+                elif symb in dna_dict:
+                    complement_seq.append(dna_dict[symb])
                 else:
-                    complement_seq.append(m)
+                    complement_seq.append(symb)
         results.append("".join(complement_seq))
     if len(args) == 1:
-        return "".join(results)
+        return results[0]
     return results
 
 
 def reverse_complement(*args: str) -> Union[List[str], str]:
-    normal_complement = complement(*args)
-    results = normal_complement[::-1]
-    if len(args) == 1:
-        return "".join(results)
-    return results
+    return reverse(complement(*args))
 
 
 # Дополнительные функции
@@ -95,5 +99,5 @@ def find_start_codons(*args: str) -> Dict[str, Union[List, str]]:
         if positions:
             results[arg] = positions
         else:
-            results[arg] = "отсутствует"
+            results[arg] = []
     return results
