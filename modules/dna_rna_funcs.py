@@ -1,14 +1,22 @@
 from typing import Dict, List, Union
 
-dna_dict = {'A': 'T', 'G': 'C', 'T': 'A', 'C': 'G', 'a': 't', 'g': 'c', 't': 'a', 'c': 'g'}
-rna_dict = {'A': 'U', 'G': 'C', 'U': 'A', 'C': 'G', 'a': 'u', 'g': 'c', 'u': 'a', 'c': 'g'}
+dna_dict = {
+    'A': 'T', 'G': 'C', 'T': 'A', 'C': 'G',
+    'a': 't', 'g': 'c', 't': 'a', 'c': 'g'
+    }
+rna_dict = {
+    'A': 'U', 'G': 'C', 'U': 'A', 'C': 'G',
+    'a': 'u', 'g': 'c', 'u': 'a', 'c': 'g'
+    }
 
 
 def is_valid_na(seq: str) -> None:
     if ('u' in seq or 'U' in seq) and ('t' in seq or 'T' in seq):
         raise ValueError("Error: simultaneous presence of 'u' and 't' "
                          " in any register is unacceptable.")
-    if not set([symb.upper() for symb in seq]).issubset({'A', 'T', 'G', 'C', 'U'}):
+    if not set([symb.upper() for symb in seq]).issubset(
+            {'A', 'T', 'G', 'C', 'U'}
+            ):
         raise ValueError(f"Error: the sequence contains "
                          f"invalid characters: {seq}")
 
