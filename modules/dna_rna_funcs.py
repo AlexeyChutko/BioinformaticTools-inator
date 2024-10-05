@@ -68,7 +68,6 @@ def reverse_complement(*args: str) -> Union[List[str], str]:
     return reverse(complement(*args))
 
 
-# Дополнительные функции
 def nucleotide_frequency(*args: str) -> Dict[str, Dict[str, int]]:
     frequency_dict = {}
     for sequence in args:
