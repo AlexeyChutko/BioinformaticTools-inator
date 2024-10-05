@@ -23,7 +23,7 @@ This toolkit works with DNA and RNA sequences by performing operations such as:
 
 Example:
 ```
-from Tools import run_dna_rna_tools
+from BioinformaticTools-inator import run_dna_rna_tools
 sequences = 'ATG'
 procedure = 'transcribe'
 print(run_dna_rna_tools(sequences, procedure))
@@ -37,7 +37,7 @@ Filtering Criteria
 
 Example:
 ```
-from Tools import filter_fastq
+from BioinformaticTools-inator import filter_fastq
 seqs = {'@SRX079873': ('ACAGCA', 'FGGGFG'), '@SRX079817': ('ATTAGC', 'BFFFFF), '@SRX079858': ('ATGACCCG', 'DCD@@BBC')}
 gc_bounds = (20, 80)
 length_bounds = (30, 70)
