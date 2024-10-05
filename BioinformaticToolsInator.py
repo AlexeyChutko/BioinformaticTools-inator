@@ -21,27 +21,29 @@ def run_dna_rna_tools(
     - Union[List[str], Dict[str, Dict[str, int]], str]:
       sequence or a collection of sequences with paramters
     """
-    for j in args[:-1]:
-        if ('u' in j or 'U' in j) and ('t' in j or 'T' in j):
+    *seqs, operation = args
+    for seq in seqs:
+        if ('u' in seq or 'U' in seq) and ('t' in seq or 'T' in seq):
             raise ValueError("Error: simultaneous presence of 'u' and 't' "
                              " in any register is unacceptable.")
-        if not set([i.upper() for i in j]).issubset({'A', 'T', 'G', 'C', 'U'}):
+        if not set([i.upper() for i in seq]).issubset(
+                {'A', 'T', 'G', 'C', 'U'}):
             raise ValueError(f"Error: the sequence contains "
-                             f"invalid characters: {j}")
-    if args[-1] == 'reverse':
-        return dna_rna_funcs.reverse(*args[:-1])
-    elif args[-1] == 'transcribe':
-        return dna_rna_funcs.transcribe(*args[:-1])
-    elif args[-1] == 'complement':
-        return dna_rna_funcs.complement(*args[:-1])
-    elif args[-1] == 'reverse_complement':
-        return dna_rna_funcs.reverse_complement(*args[:-1])
-    elif args[-1] == 'nucleotide_frequency':
-        return dna_rna_funcs.nucleotide_frequency(*args[:-1])
-    elif args[-1] == 'gc_content':
-        return dna_rna_funcs.gc_content(*args[:-1])
-    elif args[-1] == 'find_start_codons':
-        return dna_rna_funcs.find_start_codons(*args[:-1])
+                             f"invalid characters: {seq}")
+    if operation == 'reverse':
+        return dna_rna_funcs.reverse(*seqs)
+    elif operation == 'transcribe':
+        return dna_rna_funcs.transcribe(*seqs)
+    elif operation == 'complement':
+        return dna_rna_funcs.complement(*seqs)
+    elif operation == 'reverse_complement':
+        return dna_rna_funcs.reverse_complement(*seqs)
+    elif operation == 'nucleotide_frequency':
+        return dna_rna_funcs.nucleotide_frequency(*seqs)
+    elif operation == 'gc_content':
+        return dna_rna_funcs.gc_content(*seqs)
+    elif operation == 'find_start_codons':
+        return dna_rna_funcs.find_start_codons(*seqs)
     else:
         print('Unidentified instruction')
 
