@@ -47,7 +47,7 @@ print(filter_fastq(seqs, gc_bounds, length_bounds, quality_threshold))
 ```
 
 #### bio_files_processor.py
-1. `convert_multiline_fasta_to_oneline`
+1. **convert_multiline_fasta_to_oneline**
 This utile converts a multi-line FASTA file to a one-line format for each sequence
 
 Example:
@@ -57,7 +57,7 @@ convert_multiline_fasta_to_oneline("sequences.fasta", "sequences_oneline.fasta")
 Output:
 A new FASTA file where each sequence is written on a single line.
 
-2. `parse_blast_output`
+2. **parse_blast_output**
 This utile parses BLAST output to extract the best match protein names and saves them to a file
 
 Example:
