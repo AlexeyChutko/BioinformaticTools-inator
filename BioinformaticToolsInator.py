@@ -23,13 +23,7 @@ def run_dna_rna_tools(
     """
     *seqs, operation = args
     for seq in seqs:
-        if ('u' in seq or 'U' in seq) and ('t' in seq or 'T' in seq):
-            raise ValueError("Error: simultaneous presence of 'u' and 't' "
-                             " in any register is unacceptable.")
-        if not set([i.upper() for i in seq]).issubset(
-                {'A', 'T', 'G', 'C', 'U'}):
-            raise ValueError(f"Error: the sequence contains "
-                             f"invalid characters: {seq}")
+        dna_rna_funcs.is_valid_na(seq)
     if operation == 'reverse':
         return dna_rna_funcs.reverse(*seqs)
     elif operation == 'transcribe':
@@ -49,20 +43,20 @@ def run_dna_rna_tools(
 
 
 def filter_fastq(
-        seqs: Dict[str, Tuple[str, str]],
+        input_fastq: str,
+        output_fastq: str,
         gc_bounds: Union[Tuple[float, float], float] = (0, 100),
         length_bounds: Union[Tuple[int, int], int] = (0, 2**32),
         quality_threshold: int = 0
         ) -> Dict[str, Tuple[str, str]]:
+
     """
     Filters provided sequences based on its gc composition, length
     and average sequence quality
 
     Args:
-    - seqs Dict[str, Tuple[str, str]]: a dictionary consisting of
-      fastq sequents.
-        The key is a string, the name of the sequence.
-        The value is a tuple of two strings: sequence and quality.
+    - input_fastq str: a file consisting of fastq sequents with their quality
+    - output_fastq str: a file with filtered sequences
     - gc_bounds Union[Tuple[float, float], float]:
       the GC interval of the composition (in percent) for filtration
     - length_bounds Union[Tuple[int, int], int]:
@@ -74,7 +68,7 @@ def filter_fastq(
     Returns:
     - Dict[str, Tuple[str, str]]: a dictionary with filtered sequences
     """
-
+    seqs = fastq_funcs.read_fastq(input_fastq)
     filtered_seqs = {}
     if isinstance(gc_bounds, (int, float)):
         gc_bounds = (0, gc_bounds)
@@ -90,5 +84,7 @@ def filter_fastq(
         if not fastq_funcs.quality_filter(quality, quality_threshold):
             continue
         filtered_seqs[name] = (sequence, quality)
-
+    fastq_funcs.write_fastq(filtered_seqs, output_fastq)
     return filtered_seqs
+
+
