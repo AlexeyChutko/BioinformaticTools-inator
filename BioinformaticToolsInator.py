@@ -133,7 +133,7 @@ class AminoAcidSequence(BiologicalSequence):
             raise ValueError("Invalid amino acid sequence")
 
 
-def new_filter_fastq(
+def filter_fastq(
         input_fastq: str,
         output_fastq: str,
         gc_bounds: Union[Tuple[float, float], float] = (0, 100),
