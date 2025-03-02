@@ -1,90 +1,212 @@
 from typing import Dict, List, Tuple, Union
-from modules import dna_rna_funcs, fastq_funcs
+from abc import ABC, abstractmethod
+from Bio import SeqIO
+from Bio.SeqUtils import gc_fraction
+import os
 
 
-def run_dna_rna_tools(
-        *args: str
-        ) -> Union[List[str], Dict[str, Dict[str, int]], str]:
-    """
-    Performs a specified action on all sequences transmitted from input
+class BiologicalSequence(ABC):
+    '''
+    An abstract base class for representing biological sequences.
+    The class provides a general framework for working with biological sequences such as DNA, RNA, and proteins.
+    It includes methods for validating the alphabet, obtaining sequence length, and accessing sequence elements.
+    '''
+    def __init__(self, sequence: str):
+        self.sequence = sequence.upper()
+        self._validate_alphabet()
 
-    Args:
-    - DNA or RNA sequences as str and a procedure to perform
-      as the last argument
+    @abstractmethod
+    def _validate_alphabet(self):
+        pass
 
-    Possible procedures:
-    - Main procedures: reverse, transcribe, complement, reverse_complement
-    - Additional procedures:
-      nucleotide_frequency, gc_content, find_start_codons
+    def __len__(self):
+        return len(self.sequence)
 
-    Returns:
-    - Union[List[str], Dict[str, Dict[str, int]], str]:
-      sequence or a collection of sequences with paramters
-    """
-    *seqs, operation = args
-    for seq in seqs:
-        dna_rna_funcs.is_valid_na(seq)
-    if operation == 'reverse':
-        return dna_rna_funcs.reverse(*seqs)
-    elif operation == 'transcribe':
-        return dna_rna_funcs.transcribe(*seqs)
-    elif operation == 'complement':
-        return dna_rna_funcs.complement(*seqs)
-    elif operation == 'reverse_complement':
-        return dna_rna_funcs.reverse_complement(*seqs)
-    elif operation == 'nucleotide_frequency':
-        return dna_rna_funcs.nucleotide_frequency(*seqs)
-    elif operation == 'gc_content':
-        return dna_rna_funcs.gc_content(*seqs)
-    elif operation == 'find_start_codons':
-        return dna_rna_funcs.find_start_codons(*seqs)
-    else:
-        print('Unidentified instruction')
+    def __getitem__(self, index):
+        return self.sequence[index]
+
+    def __str__(self):
+        return self.sequence
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}('{self.sequence}')"
 
 
-def filter_fastq(
+class NucleicAcidSequence(BiologicalSequence):
+    '''
+    Abstract class for nucleic acid sequences (DNA and RNA)
+    Can find complement and reversed complement, do reverese,
+    calculate nucleotide frequency and GC content of sequences
+    '''
+    def complement(self):
+        '''
+        Returns a complementary sequence
+        '''
+        dna_dict = str.maketrans("ACGTacgt", "TGCAtgca")
+        rna_dict = str.maketrans("ACGUacgu", "UGCAugca")
+        trans_table = rna_dict if "U" in self.sequence or "u" in self.sequence else dna_dict
+        return self.sequence.translate(trans_table)
+
+    def reverse(self):
+        '''
+        Returns reversed sequence
+        '''
+        return self.sequence[::-1]
+
+    def reverse_complement(self):
+        '''
+        Returns reversed complementary sequnce'''
+        return self.complement()[::-1]
+
+    def nucleotide_frequency(self):
+        '''
+        Returns a dictionary with the frequency of each nucleotide in sequence
+        '''
+        frequency = {}
+        for nucl in self.sequence:
+            frequency[nucl] = frequency.get(nucl, 0) + 1
+        return frequency
+
+    def gc_content(self):
+        '''
+        Returns a percent of G and C nucleotides ins sequence
+        '''
+        g_count = self.sequence.count('G')
+        c_count = self.sequence.count('C')
+        gc_count = g_count + c_count
+        return int(round((gc_count / len(self.sequence)) * 100, 0)) if self.sequence else 0
+
+    def _validate_alphabet(self):
+        valid_nucleotides = set("ACGTU")
+        if not set(self.sequence).issubset(valid_nucleotides):
+            raise ValueError("Invalid nucleotide sequence")
+
+
+class DNASequence(NucleicAcidSequence):
+    '''
+    Class for DNA sequences.
+    Can to transcription of sequences
+    '''
+    def transcribe(self):
+        return self.sequence.replace('T', 'U').replace('t', 'u')
+
+
+class RNASequence(NucleicAcidSequence):
+    '''
+    Class for RNA sequences.
+    Can find start codons of sequences
+    '''
+    def find_start_codons(self):
+        start_codon = "AUG"
+        positions = [i for i in range(len(self.sequence) - 2) if self.sequence[i:i+3] == start_codon]
+        return positions
+
+
+class AminoAcidSequence(BiologicalSequence):
+    '''
+    Class for amino acid sequences.
+    Can calculate molecular weight of sequence and the frequency of each aminoacid in sequence
+    '''
+    def molecular_weight(self):
+        """Calculates the molecular weight of an amino acid sequence (excluding modifications).
+        Aminoacid mass was taken from Thermo Fisher Scientific website"""
+        amino_acid_weights = {
+            'A': 89.1, 'C': 121.2, 'D': 133.1, 'E': 147.1, 'F': 165.2,
+            'G': 75.1, 'H': 155.2, 'I': 131.2, 'K': 146.2, 'L': 131.2,
+            'M': 149.2, 'N': 132.1, 'P': 115.1, 'Q': 146.2, 'R': 174.2,
+            'S': 105.1, 'T': 119.1, 'V': 117.1, 'W': 204.2, 'Y': 181.2
+        }
+        return sum(amino_acid_weights[aa] for aa in self.sequence)
+
+    def aminoacid_frequency(self):
+        """
+        Calculates frequency of aminoacids in sequence alike to nucleotide_frequency function
+        """
+        frequency = {}
+        for amin in self.sequence:
+            frequency[amin] = frequency.get(amin, 0) + 1
+        return frequency
+
+    def _validate_alphabet(self):
+        valid_amino_acids = set("ACDEFGHIKLMNPQRSTVWYacdefghiklmnpqrstvwy")
+        if not set(self.sequence).issubset(valid_amino_acids):
+            raise ValueError("Invalid amino acid sequence")
+
+
+def new_filter_fastq(
         input_fastq: str,
         output_fastq: str,
         gc_bounds: Union[Tuple[float, float], float] = (0, 100),
         length_bounds: Union[Tuple[int, int], int] = (0, 2**32),
         quality_threshold: int = 0
-        ) -> Dict[str, Tuple[str, str]]:
-
+                    ) -> Dict[str, Tuple[str, str]]:
     """
-    Filters provided sequences based on its gc composition, length
-    and average sequence quality
+    Filters sequences in a FASTQ file based on GC content, sequence length,
+    and average quality score.
 
     Args:
-    - input_fastq str: a file consisting of fastq sequents with their quality
-    - output_fastq str: a file with filtered sequences
-    - gc_bounds Union[Tuple[float, float], float]:
-      the GC interval of the composition (in percent) for filtration
-    - length_bounds Union[Tuple[int, int], int]:
-      the length interval for filtering
-      within which the filtered sequences should be
-    - quality_threshold int:
-      the threshold value of the average read quality for filtering
+        input_fastq (str): Path to the input FASTQ file.
+        output_fastq (str): Path to the output FASTQ file.
+        gc_bounds (Union[Tuple[float, float], float], optional):
+            GC content range for filtering. Defaults to (0, 100).
+        length_bounds (Union[Tuple[int, int], int], optional):
+            Length range for filtering. Defaults to (0, 2**32).
+        quality_threshold (int, optional):
+            Minimum average quality score. Defaults to 0.
 
     Returns:
-    - Dict[str, Tuple[str, str]]: a dictionary with filtered sequences
+        Dict[str, Tuple[str, str]]: Dictionary of filtered sequences.
     """
-    seqs = fastq_funcs.read_fastq(input_fastq)
-    filtered_seqs = {}
     if isinstance(gc_bounds, (int, float)):
         gc_bounds = (0, gc_bounds)
-
     if isinstance(length_bounds, (int, float)):
         length_bounds = (0, length_bounds)
 
-    for name, (sequence, quality) in seqs.items():
-        if not fastq_funcs.gc_filter(sequence, gc_bounds):
-            continue
-        if not fastq_funcs.length_filter(sequence, length_bounds):
-            continue
-        if not fastq_funcs.quality_filter(quality, quality_threshold):
-            continue
-        filtered_seqs[name] = (sequence, quality)
-    fastq_funcs.write_fastq(filtered_seqs, output_fastq)
+    filtered_seqs = {}
+    output_dir = 'filtered'
+    os.makedirs(output_dir, exist_ok=True)
+
+    output_path = os.path.join(output_dir, output_fastq)
+    base, ext = os.path.splitext(output_path)
+    counter = 1
+    while os.path.exists(output_path):
+        output_path = f"{base}_{counter}{ext}"
+        counter += 1
+
+    with open(output_path, 'w') as output_handle:
+        for record in SeqIO.parse(input_fastq, 'fastq'):
+            if not gc_filter(record.seq, gc_bounds):
+                continue
+            if not length_filter(record.seq, length_bounds):
+                continue
+            if not quality_filter(record.letter_annotations['phred_quality'], quality_threshold):
+                continue
+
+            SeqIO.write(record, output_handle, 'fastq')
+            filtered_seqs[record.id] = (str(record.seq), ''.join(map(chr, [q + 33 for q in record.letter_annotations['phred_quality']])))
+
     return filtered_seqs
 
 
+def quality_filter(quality_scores: list, quality_threshold: int) -> bool:
+    """
+    Filters based on average quality score.
+    """
+    if not quality_scores:
+        return False
+    return sum(quality_scores) / len(quality_scores) >= quality_threshold
+
+
+def gc_filter(seq, gc_bounds: Tuple[float, float]) -> bool:
+    """
+    Filters based on GC content percentage.
+    """
+    gc_percent = gc_fraction(seq) * 100
+    return gc_bounds[0] <= gc_percent <= gc_bounds[1]
+
+
+def length_filter(seq, length_bounds: Tuple[int, int]) -> bool:
+    """
+    Filters based on sequence length.
+    """
+    return length_bounds[0] <= len(seq) <= length_bounds[1]
