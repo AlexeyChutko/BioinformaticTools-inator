@@ -7,12 +7,12 @@
 ```
 git clone git@github.com:AlexeyChutko/BioinformaticTools-inator.git
 git branch -all
-git checkout hw4
+git checkout hw15
 ```
 
 ### Usage
 #### BioinformaticToolsInator.py
-1. **run_dna_rna_tools**  
+1. **NucleicAcidSequence**  
 This toolkit works with DNA and RNA sequences by performing operations such as:  
 - `transcribe`: Transcribes a DNA sequence to RNA (replaces thymine 'T' with uracil 'U').
 - `complement`: Generates the complement of a DNA or RNA sequence.
@@ -20,14 +20,30 @@ This toolkit works with DNA and RNA sequences by performing operations such as:
 - `reverse_complement`: Generates the reverse complement of a DNA or RNA sequence.
 - `nucleotide_frequency`: Computes the nucleotide frequency (A, T/U, G, C) for each input sequence.
 - `gc_content`: Calculates the GC-content (percentage of G and C nucleotides) of each input sequence.
-- `find_start_codons`: Identifies the positions of start codons (AUG for RNA, ATG for DNA) in each sequence.  
+- `find_start_codons`: Identifies the positions of start codons (AUG for RNA) in each sequence.  
 
-Example:
+Example for DNASequence:
 ```
-from BioinformaticToolsInator import run_dna_rna_tools
-sequences = 'ATG'
-procedure = 'transcribe'
-print(run_dna_rna_tools(sequences, procedure))
+from BioinformaticToolsInator import DNASequence
+dna_seq = DNASequence('ATGCATGC')
+print(dna_seq.reverse_complement()) # GCATGCAT
+```
+Example for RNASequence:
+```
+from BioinformaticToolsInator import RNASequence
+rna_seq = RNASequence("AUGCAUGC")
+print(rna_seq.find_start_codons()) # [0, 4]
+```
+2. **AminoAcidSequence**  
+This class works with proteinsequences by performing operations such as:  
+- `aminoacid_frequency`: Computes the aminoacid frequency for the input sequence.
+- `molecular_weight`: Calculates the molecular weight of an amino acid sequence (excluding modifications)
+
+Example for AminoAcidSequence:
+```
+from BioinformaticToolsInator import AminoAcidSequence
+aa = AminoAcidSequence("ACDEFGHIKLMNPQRSTVWY")
+print(aa.molecular_weight()) # 2738.1
 ```
 2. **filter_fastq**  
 This utile filters fastq sequences with their length, GC composition and quality (based on phred33)  
@@ -38,7 +54,7 @@ Filtering Criteria
 
 Example:
 ```
-from BioinformaticTools-inator import filter_fastq
+from BioinformaticToolsInator import filter_fastq
 seqs = {'@SRX079873': ('ACAGCA', 'FGGGFG'), '@SRX079817': ('ATTAGC', 'BFFFFF), '@SRX079858': ('ATGACCCG', 'DCD@@BBC')}
 gc_bounds = (20, 80)
 length_bounds = (30, 70)
