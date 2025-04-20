@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from Bio import SeqIO
 from Bio.SeqUtils import gc_fraction
 import os
+import argparse
+import logging
 
 
 class BiologicalSequence(ABC):
@@ -133,6 +135,17 @@ class AminoAcidSequence(BiologicalSequence):
             raise ValueError("Invalid amino acid sequence")
 
 
+logging.basicConfig()
+logger = logging.getLogger("FastqFilter")
+logger.setLevel(logging.INFO)
+
+file_handler = logging.FileHandler("fastq_filter.log")
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+logger.addHandler(file_handler)
+
+
 def filter_fastq(
         input_fastq: str,
         output_fastq: str,
@@ -173,19 +186,41 @@ def filter_fastq(
         output_path = f"{base}_{counter}{ext}"
         counter += 1
 
-    with open(output_path, 'w') as output_handle:
-        for record in SeqIO.parse(input_fastq, 'fastq'):
-            if not gc_filter(record.seq, gc_bounds):
-                continue
-            if not length_filter(record.seq, length_bounds):
-                continue
-            if not quality_filter(record.letter_annotations['phred_quality'], quality_threshold):
-                continue
+    logger.info(f"File filtering started {input_fastq} → {output_path}")
 
-            SeqIO.write(record, output_handle, 'fastq')
-            filtered_seqs[record.id] = (str(record.seq), ''.join(map(chr, [q + 33 for q in record.letter_annotations['phred_quality']])))
+    try:
+        with open(output_path, 'w') as output_handle:
+            for record in SeqIO.parse(input_fastq, 'fastq'):
+                if not gc_filter(record.seq, gc_bounds):
+                    continue
+                if not length_filter(record.seq, length_bounds):
+                    continue
+                if not quality_filter(record.letter_annotations['phred_quality'], quality_threshold):
+                    continue
 
+                SeqIO.write(record, output_handle, 'fastq')
+                filtered_seqs[record.id] = (str(record.seq), ''.join(map(chr, [q + 33 for q in record.letter_annotations['phred_quality']])))
+    except Exception as e:
+        logger.error(f"Error during processing {input_fastq}: {e}")
+        raise
+
+    logger.info(f"Filtering completed: {len(filtered_seqs)} selected")
     return filtered_seqs
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="FASTQ filtering by GC content, length and quality")
+
+    parser.add_argument("input_fastq", help="The path to the input FASTQ file")
+    parser.add_argument("output_fastq", help="Name of the output FASTQ file")
+    parser.add_argument("--gc_bounds", nargs='+', type=float, default=[0, 100],
+                        help="GC content limits: one number (upper bound) or two (lower and upper bound)")
+    parser.add_argument("--length_bounds", nargs='+', type=int, default=[0, 2**32],
+                        help="Length limits: one number (upper bound) or two (lower and upper bound)")
+    parser.add_argument("--quality_threshold", type=int, default=0,
+                        help="Minimum average quality value")
+
+    return parser.parse_args()
 
 
 def quality_filter(quality_scores: list, quality_threshold: int) -> bool:
